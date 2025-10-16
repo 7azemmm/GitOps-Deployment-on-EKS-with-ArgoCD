@@ -24,17 +24,18 @@ ArgoCD continuously monitors a GitHub repository and ensures that the Kubernetes
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
-│   └── modules/
-│       ├── vpc/
-│       ├── eks/
-│       └── bastion/
+|   ├── provider.tf 
+│   ├── iam/
+|   ├── SecurityGroup/
+|   ├── Network/
+│   ├── eks/
+│   └── bastion/
+
 ├── k8s-manifests/
 │   ├── base/                           # Base Kubernetes resources
 │   ├── overlays/                       # Kustomize overlays per environment
 │   │   ├── dev/
 │   │   └── prod/
-│   ├── ingress/                        # NGINX ingress configuration
-│   └── apps/                           # Application manifests
 └── README.md
 ```
 
@@ -52,7 +53,6 @@ The backend repository includes:
   - Runs automated tests
   - Builds the Docker image
   - Pushes the image to Amazon ECR
-  - Triggers ArgoCD sync (optional)
 
 ### Frontend Repository
 **Repository:** https://github.com/7azemmm/frontend.git
@@ -64,8 +64,6 @@ The frontend repository includes:
   - Runs automated tests
   - Builds the Docker image
   - Pushes the image to Amazon ECR
-  - Triggers ArgoCD sync (optional)
-
 ## ⚙️ Prerequisites
 
 Ensure you have the following installed:
@@ -74,7 +72,7 @@ Ensure you have the following installed:
 - kubectl
 - Terraform
 - Helm
-- ArgoCD CLI (`brew install argocd` or manual binary install)
+- ArgoCD CLI 
 - NGINX Ingress Controller
 - Docker (for local testing)
 - GitHub CLI (optional, for managing repositories)
@@ -91,7 +89,7 @@ terraform apply -auto-approve
 
 This will create:
 - VPC with public and private subnets
-- EKS cluster
+- EKS cluster with private endpoint
 - Bastion host for secure access
 - Necessary IAM roles and security groups
 
@@ -167,18 +165,6 @@ Then apply it:
 kubectl apply -f argocd-ingress.yaml
 ```
 
-### 5️⃣ Configure AWS ECR Credentials in ArgoCD
-
-ArgoCD needs access to pull images from Amazon ECR. Create a secret:
-
-```bash
-kubectl create secret docker-registry ecr-secret \
-  --docker-server=<your-aws-account-id>.dkr.ecr.<region>.amazonaws.com \
-  --docker-username=AWS \
-  --docker-password=$(aws ecr get-login-password --region <region>) \
-  -n default
-```
-
 Update your Kubernetes deployment manifests to reference this secret.
 
 ### 6️⃣ Connect ArgoCD to GitHub Repository
@@ -187,7 +173,7 @@ From ArgoCD UI:
 
 - Go to **Settings → Repositories → Connect Repo** using HTTPS
 - Enter:
-  - **Repository URL:** https://github.com/<your-username>/K8s-objects
+  - **Repository URL:** https://github.com/7azemmm/K8s-objects
   - **Type:** Git
   - **Username/Password** or Personal Access Token
   - Click **Connect**
@@ -260,6 +246,7 @@ Your app will automatically deploy from your GitHub repo! 🎉
 - **K8s Manifests & Infrastructure:** Current repository
 - **Backend:** https://github.com/7azemmm/testBack.git
 - **Frontend:** https://github.com/7azemmm/frontend.git
+- **k8s objects:** https://github.com/7azemmm/K8s-objects
 
 ## 👨‍💻 Author
 
